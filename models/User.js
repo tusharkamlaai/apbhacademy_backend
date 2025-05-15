@@ -11,6 +11,12 @@ const userSchema = mongoose.Schema(
     fullName: {
       type: String,
     },
+    state: {
+      type: String,
+    },
+    district: {
+      type: String,
+    },
     city: {
       type: String,
     },
@@ -18,9 +24,14 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    signupIp: String,  // Store IP address
+    lastLoginIp: String // Optional: track last login IP
   },
   {
     timestamps: true,
+  },
+  {
+    timestamps: true, // Automatically adds createdAt and updatedAt
   }
 );
 

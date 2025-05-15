@@ -4,19 +4,37 @@ const User = require('../models/User');
 // @route   GET /api/users/profile
 // @access  Private (User)
 const getUserProfile = async (req, res) => {
-  const user = await User.findById(req.user._id);
+  try {
+    const user = await User.findById(req.user._id).select('-password');
 
-  if (user) {
-    res.json({
-      _id: user._id,
-      phoneNumber: user.phoneNumber,
-      fullName: user.fullName,
-      city: user.city,
-      isProfileComplete: user.isProfileComplete,
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        _id: user._id,
+        phoneNumber: user.phoneNumber,
+        fullName: user.fullName,
+        city: user.city,
+        state: user.state,         // Added state field
+        district: user.district,   // Added district field
+        isProfileComplete: user.isProfileComplete,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
     });
-  } else {
-    res.status(404);
-    throw new Error('User not found');
+
+  } catch (error) {
+    console.error('Get profile error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching profile'
+    });
   }
 };
 
@@ -24,24 +42,44 @@ const getUserProfile = async (req, res) => {
 // @route   PUT /api/users/profile
 // @access  Private (User)
 const updateUserProfile = async (req, res) => {
-  const user = await User.findById(req.user._id);
+  try {
+    const user = await User.findById(req.user._id);
 
-  if (user) {
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update all editable fields
     user.fullName = req.body.fullName || user.fullName;
     user.city = req.body.city || user.city;
+    user.state = req.body.state || user.state;
+    user.district = req.body.district || user.district;
 
     const updatedUser = await user.save();
 
-    res.json({
-      _id: updatedUser._id,
-      phoneNumber: updatedUser.phoneNumber,
-      fullName: updatedUser.fullName,
-      city: updatedUser.city,
-      isProfileComplete: updatedUser.isProfileComplete,
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        _id: updatedUser._id,
+        phoneNumber: updatedUser.phoneNumber,
+        fullName: updatedUser.fullName,
+        city: updatedUser.city,
+        state: updatedUser.state,
+        district: updatedUser.district,
+        isProfileComplete: updatedUser.isProfileComplete
+      }
     });
-  } else {
-    res.status(404);
-    throw new Error('User not found');
+
+  } catch (error) {
+    console.error('Profile update error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during profile update'
+    });
   }
 };
 

@@ -93,22 +93,24 @@ const verifyOtp = async (req, res) => {
     // Generate token
     const token = generateToken(user._id);
 
-    if (user.isProfileComplete) {
-      // User has completed profile - return full user data with token
-      return res.status(200).json({
-        success: true,
-        message: 'Login successful',
-        user: {
-          _id: user._id,
-          phoneNumber: user.phoneNumber,
-          fullName: user.fullName,
-          city: user.city,
-          isProfileComplete: true
-        },
-        token,
-        profileComplete: true
-      });
-    } else {
+// In verifyOtp function, update the response for profileComplete: true case
+if (user.isProfileComplete) {
+  return res.status(200).json({
+    success: true,
+    message: 'Login successful',
+    user: {
+      _id: user._id,
+      phoneNumber: user.phoneNumber,
+      fullName: user.fullName,
+      city: user.city,
+      state: user.state,
+      district: user.district,
+      isProfileComplete: true
+    },
+    token,
+    profileComplete: true
+  });
+} else {
       // User needs to complete profile
       return res.status(200).json({
         success: true,
@@ -136,7 +138,7 @@ const verifyOtp = async (req, res) => {
 // @route   PUT /api/auth/complete-profile
 // @access  Private (User)
 const completeProfile = async (req, res) => {
-  const { fullName, city } = req.body;
+  const { fullName, city, state, district } = req.body;
 
   if (!fullName || !city) {
     return res.status(400).json({
@@ -158,12 +160,11 @@ const completeProfile = async (req, res) => {
     // Update user profile
     user.fullName = fullName;
     user.city = city;
+    user.state = state || null; // Make optional
+    user.district = district || null; // Make optional
     user.isProfileComplete = true;
 
     const updatedUser = await user.save();
-
-    // Generate new token (optional)
-    const token = generateToken(updatedUser._id);
 
     return res.status(200).json({
       success: true,
@@ -173,9 +174,10 @@ const completeProfile = async (req, res) => {
         phoneNumber: updatedUser.phoneNumber,
         fullName: updatedUser.fullName,
         city: updatedUser.city,
-        isProfileComplete: true
-      },
-      token
+        state: updatedUser.state,
+        district: updatedUser.district,
+        isProfileComplete: updatedUser.isProfileComplete
+      }
     });
 
   } catch (error) {
